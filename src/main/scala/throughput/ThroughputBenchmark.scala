@@ -23,24 +23,25 @@ object ThroughputBenchmark {
   val system = ActorSystem("benchmark", config.getConfig("benchmark").withFallback(config))
 
   def main(args: Array[String]): Unit = {
-    runScenario(10, 100000, warmup = true) // warm up
+    val messageCount = 1000000
+    runScenario(10, messageCount, warmup = true) // warm up
 
-    runScenario(1, 100000, warmup = false)
-    runScenario(2, 100000, warmup = false)
-    runScenario(3, 100000, warmup = false)
-    runScenario(4, 100000, warmup = false)
-    runScenario(5, 100000, warmup = false)
-    runScenario(6, 100000, warmup = false)
-    runScenario(7, 100000, warmup = false)
-    runScenario(8, 100000, warmup = false)
-    runScenario(9, 100000, warmup = false)
-    runScenario(10, 100000, warmup = false)
-    runScenario(12, 100000, warmup = false)
-    runScenario(14, 100000, warmup = false)
-    runScenario(16, 100000, warmup = false)
-    runScenario(18, 100000, warmup = false)
-    runScenario(20, 100000, warmup = false)
-    runScenario(100, 100000, warmup = false)
+    runScenario(1, messageCount, warmup = false)
+    runScenario(2, messageCount, warmup = false)
+    runScenario(3, messageCount, warmup = false)
+    runScenario(4, messageCount, warmup = false)
+    runScenario(5, messageCount, warmup = false)
+    runScenario(6, messageCount, warmup = false)
+    runScenario(7, messageCount, warmup = false)
+    runScenario(8, messageCount, warmup = false)
+    runScenario(9, messageCount, warmup = false)
+    runScenario(10, messageCount, warmup = false)
+    runScenario(12, messageCount, warmup = false)
+    runScenario(14, messageCount, warmup = false)
+    runScenario(16, messageCount, warmup = false)
+    runScenario(18, messageCount, warmup = false)
+    runScenario(20, messageCount, warmup = false)
+    runScenario(100, messageCount, warmup = false)
 //    runScenario(200, 100000, warmup = false)
 
     Await.ready(system.terminate(), Duration(1, TimeUnit.MINUTES))
@@ -53,11 +54,12 @@ object ThroughputBenchmark {
     */
   def runScenario(pairs: Int, messageCount: Long, warmup: Boolean): Unit = {
     val latch = new CountDownLatch(pairs)
+    val messagesPerClient = messageCount / pairs
 
     val pongs = for (i <- 0 until pairs)
       yield system.actorOf(Props[Pong].withDispatcher(throughputDispatcher))
     val pings = for (pong <- pongs)
-      yield system.actorOf(Props(new Ping(pong, latch, messageCount)).withDispatcher(throughputDispatcher))
+      yield system.actorOf(Props(new Ping(pong, latch, messagesPerClient)).withDispatcher(throughputDispatcher))
 
     val maxRunDuration = 1000000
     val start = System.nanoTime
@@ -67,9 +69,8 @@ object ThroughputBenchmark {
     val durationS = time.toDouble / 1000000000.0
 
     if (!warmup) {
-      println("actors " + pairs + ", messages: " + messageCount)
-      println(durationS)
-      println(messageCount.toDouble / durationS)
+      println("actors " + pairs + ", messages: " + messageCount + " mes/s " + (messageCount / durationS).toInt)
+//      println(durationS)
     }
 
     pongs.foreach(system.stop(_))

@@ -23,7 +23,7 @@ object ThroughputBenchmark {
   val system = ActorSystem("benchmark", config.getConfig("benchmark").withFallback(config))
 
   def main(args: Array[String]): Unit = {
-    val messageCount = 1000000
+    val messageCount = 10000000L
     runScenario(10, messageCount, warmup = true) // warm up
 
     runScenario(1, messageCount, warmup = false)

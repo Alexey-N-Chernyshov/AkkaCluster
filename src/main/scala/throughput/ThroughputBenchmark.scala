@@ -9,30 +9,39 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 /**
   * The goal is to benchmark the throughput of Akka.
   * 1st scenario is to get maximum throughput on a single machine.
   */
 object ThroughputBenchmark {
 
+  val config = ConfigFactory.load()
+  val throughputDispatcher = "benchmark.throughput-dispatcher"
+  val system = ActorSystem("benchmark", config.getConfig("benchmark").withFallback(config))
+
   def main(args: Array[String]): Unit = {
-    //runScenario(2, 1000000)
-    runScenario(2, 1000000)
-    runScenario(20, 1000000)
-    runScenario(100, 1000000)
-    runScenario(200, 1000000)
+    runScenario(10, 100000, warmup = true) // warm up
+
+    runScenario(1, 100000, warmup = false)
+    runScenario(2, 100000, warmup = false)
+    runScenario(20, 100000, warmup = false)
+    runScenario(100, 100000, warmup = false)
+    runScenario(200, 100000, warmup = false)
+
+    Await.ready(system.terminate(), Duration(1, TimeUnit.MINUTES))
   }
 
   /**
     * Runs scenario.
     * @param pairs - number of ping-pong pairs
-    * @param messageCount
+    * @param messageCount - number of messages
     */
-  def runScenario(pairs: Int, messageCount: Long): Unit = {
+  def runScenario(pairs: Int, messageCount: Long, warmup: Boolean): Unit = {
     val latch = new CountDownLatch(pairs)
-    val config = ConfigFactory.load()
-    val throughputDispatcher = "benchmark.throughput-dispatcher"
-    val system = ActorSystem("benchmark", config.getConfig("benchmark").withFallback(config))
+
     val pongs = for (i <- 0 until pairs)
       yield system.actorOf(Props[Pong].withDispatcher(throughputDispatcher))
     val pings = for (pong <- pongs)
@@ -44,12 +53,15 @@ object ThroughputBenchmark {
     val ok = latch.await(maxRunDuration, TimeUnit.MILLISECONDS)
     val time = System.nanoTime - start
     val durationS = time.toDouble / 1000000000.0
-    println(durationS)
-    println(messageCount.toDouble / durationS)
 
-    pings.foreach(system.stop(_))
+    if (!warmup) {
+      println("actors " + pairs + ", messages: " + messageCount)
+      println(durationS)
+      println(messageCount.toDouble / durationS)
+    }
+
     pongs.foreach(system.stop(_))
-
+    pings.foreach(system.stop(_))
   }
 
   /**

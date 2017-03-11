@@ -27,9 +27,21 @@ object ThroughputBenchmark {
 
     runScenario(1, 100000, warmup = false)
     runScenario(2, 100000, warmup = false)
+    runScenario(3, 100000, warmup = false)
+    runScenario(4, 100000, warmup = false)
+    runScenario(5, 100000, warmup = false)
+    runScenario(6, 100000, warmup = false)
+    runScenario(7, 100000, warmup = false)
+    runScenario(8, 100000, warmup = false)
+    runScenario(9, 100000, warmup = false)
+    runScenario(10, 100000, warmup = false)
+    runScenario(12, 100000, warmup = false)
+    runScenario(14, 100000, warmup = false)
+    runScenario(16, 100000, warmup = false)
+    runScenario(18, 100000, warmup = false)
     runScenario(20, 100000, warmup = false)
     runScenario(100, 100000, warmup = false)
-    runScenario(200, 100000, warmup = false)
+//    runScenario(200, 100000, warmup = false)
 
     Await.ready(system.terminate(), Duration(1, TimeUnit.MINUTES))
   }

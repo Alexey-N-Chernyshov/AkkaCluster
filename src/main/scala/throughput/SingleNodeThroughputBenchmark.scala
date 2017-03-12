@@ -16,13 +16,13 @@ import scala.concurrent.duration.Duration
   * The goal is to benchmark the throughput of Akka.
   * 1st scenario is to get maximum throughput on a single machine.
   */
-object ThroughputBenchmark {
+object SingleNodeThroughputBenchmark {
 
   val config = ConfigFactory.load()
   val system = ActorSystem("benchmark", config.getConfig("benchmark").withFallback(config))
 
   def main(args: Array[String]): Unit = {
-    val messageCount = 10000000L
+    val messageCount = 30000000L
     val oneAtTimeDispatcher = "one-at-time-dispatcher"
     val throughputDispatcher = "benchmark.throughput-dispatcher"
 
@@ -37,19 +37,31 @@ object ThroughputBenchmark {
     println("oneAtTime")
     println("----------------")
     println("Ping-pong")
-    runSequenceScenario(messageCount, oneAtTimeDispatcher, warmup = false, batch = false)
+    for (i <- 0 until 5) {
+      println("---- " + i)
+      runSequenceScenario(messageCount, oneAtTimeDispatcher, warmup = false, batch = false)
+    }
     println("----------------")
     println("Batch")
-    runSequenceScenario(messageCount, oneAtTimeDispatcher, warmup = false, batch = true)
+    for (i <- 0 until 5) {
+      println("---- " + i)
+      runSequenceScenario(messageCount, oneAtTimeDispatcher, warmup = false, batch = true)
+    }
 
     println("================")
     println("Throughput")
     println("----------------")
     println("Ping-pong")
-    runSequenceScenario(messageCount, throughputDispatcher, warmup = false, batch = false)
+    for (i <- 0 until 5) {
+      println("---- " + i)
+      runSequenceScenario(messageCount, throughputDispatcher, warmup = false, batch = false)
+    }
     println("----------------")
     println("Batch")
-    runSequenceScenario(messageCount, throughputDispatcher, warmup = false, batch = true)
+    for (i <- 0 until 5) {
+      println("---- " + i)
+      runSequenceScenario(messageCount, throughputDispatcher, warmup = false, batch = true)
+    }
 
     Await.ready(system.terminate(), Duration(1, TimeUnit.MINUTES))
   }
@@ -108,8 +120,9 @@ object ThroughputBenchmark {
     val durationS = time.toDouble / 1000000000.0
 
     if (!warmup) {
-      println("actors " + pairs + ", messages: " + messageCount + ", mes/s: " +
-        (messageCount / durationS).toInt + ", time: " + durationS)
+      //println("actors " + pairs + ", messages: " + messageCount + ", mes/s: " +
+      //  (messageCount / durationS).toInt + ", time: " + durationS)
+      println((messageCount / durationS).toInt)
     }
 
     pongs.foreach(system.stop(_))

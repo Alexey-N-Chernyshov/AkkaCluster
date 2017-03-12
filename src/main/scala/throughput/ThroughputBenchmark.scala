@@ -41,8 +41,15 @@ object ThroughputBenchmark {
     runScenario(16, messageCount, warmup = false)
     runScenario(18, messageCount, warmup = false)
     runScenario(20, messageCount, warmup = false)
+    runScenario(30, messageCount, warmup = false)
+    runScenario(40, messageCount, warmup = false)
+    runScenario(50, messageCount, warmup = false)
+    runScenario(60, messageCount, warmup = false)
+    runScenario(70, messageCount, warmup = false)
+    runScenario(80, messageCount, warmup = false)
+    runScenario(90, messageCount, warmup = false)
     runScenario(100, messageCount, warmup = false)
-//    runScenario(200, 100000, warmup = false)
+    runScenario(200, 100000, warmup = false)
 
     Await.ready(system.terminate(), Duration(1, TimeUnit.MINUTES))
   }
@@ -69,7 +76,7 @@ object ThroughputBenchmark {
     val durationS = time.toDouble / 1000000000.0
 
     if (!warmup) {
-      println("actors " + pairs + ", messages: " + messageCount + " mes/s " + (messageCount / durationS).toInt)
+      println("actors " + pairs + ", messages: " + messageCount + ", mes/s " + (messageCount / durationS).toInt)
 //      println(durationS)
     }
 
@@ -86,6 +93,11 @@ object ThroughputBenchmark {
     * Start benchmarking.
     */
   case object StartMessage
+
+  /**
+    * Message for batch job.
+    */
+  case object StartBatchMessage
 
   /**
     * Replyes on the message, pong it back to the sender
@@ -123,6 +135,9 @@ object ThroughputBenchmark {
           latch.countDown()
         }
       case StartMessage =>
+        sent += 1
+        pong ! PingMessage
+      case StartBatchMessage =>
         for (i <- 0L until messageCount) {
           sent += 1
           pong ! PingMessage

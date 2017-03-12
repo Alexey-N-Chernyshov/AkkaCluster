@@ -19,67 +19,63 @@ import scala.concurrent.duration.Duration
 object ThroughputBenchmark {
 
   val config = ConfigFactory.load()
-  val throughputDispatcher = "benchmark.throughput-dispatcher"
   val system = ActorSystem("benchmark", config.getConfig("benchmark").withFallback(config))
 
   def main(args: Array[String]): Unit = {
     val messageCount = 10000000L
-    runScenario(10, messageCount, warmup = true, batch = true) // warm up
+    val oneAtTimeDispatcher = "one-at-time-dispatcher"
+    val throughputDispatcher = "benchmark.throughput-dispatcher"
 
-    println("Batch")
-    runScenario(1, messageCount, warmup = false, batch = true)
-    runScenario(2, messageCount, warmup = false, batch = true)
-    runScenario(3, messageCount, warmup = false, batch = true)
-    runScenario(4, messageCount, warmup = false, batch = true)
-    runScenario(5, messageCount, warmup = false, batch = true)
-    runScenario(6, messageCount, warmup = false, batch = true)
-    runScenario(7, messageCount, warmup = false, batch = true)
-    runScenario(8, messageCount, warmup = false, batch = true)
-    runScenario(9, messageCount, warmup = false, batch = true)
-    runScenario(10, messageCount, warmup = false, batch = true)
-    runScenario(12, messageCount, warmup = false, batch = true)
-    runScenario(14, messageCount, warmup = false, batch = true)
-    runScenario(16, messageCount, warmup = false, batch = true)
-    runScenario(18, messageCount, warmup = false, batch = true)
-    runScenario(20, messageCount, warmup = false, batch = true)
-    runScenario(30, messageCount, warmup = false, batch = true)
-    runScenario(40, messageCount, warmup = false, batch = true)
-    runScenario(50, messageCount, warmup = false, batch = true)
-    runScenario(60, messageCount, warmup = false, batch = true)
-    runScenario(70, messageCount, warmup = false, batch = true)
-    runScenario(80, messageCount, warmup = false, batch = true)
-    runScenario(90, messageCount, warmup = false, batch = true)
-    runScenario(100, messageCount, warmup = false, batch = true)
-    runScenario(200, messageCount, warmup = false, batch = true)
+    runScenario(10, messageCount, throughputDispatcher, warmup = true, batch = true) // warm up
 
+    println("================")
+    println("Throughput")
     println("----------------")
     println("Ping-pong")
-    runScenario(1, messageCount, warmup = false, batch = false)
-    runScenario(2, messageCount, warmup = false, batch = false)
-    runScenario(3, messageCount, warmup = false, batch = false)
-    runScenario(4, messageCount, warmup = false, batch = false)
-    runScenario(5, messageCount, warmup = false, batch = false)
-    runScenario(6, messageCount, warmup = false, batch = false)
-    runScenario(7, messageCount, warmup = false, batch = false)
-    runScenario(8, messageCount, warmup = false, batch = false)
-    runScenario(9, messageCount, warmup = false, batch = false)
-    runScenario(10, messageCount, warmup = false, batch = false)
-    runScenario(12, messageCount, warmup = false, batch = false)
-    runScenario(14, messageCount, warmup = false, batch = false)
-    runScenario(16, messageCount, warmup = false, batch = false)
-    runScenario(18, messageCount, warmup = false, batch = false)
-    runScenario(20, messageCount, warmup = false, batch = false)
-    runScenario(30, messageCount, warmup = false, batch = false)
-    runScenario(40, messageCount, warmup = false, batch = false)
-    runScenario(50, messageCount, warmup = false, batch = false)
-    runScenario(60, messageCount, warmup = false, batch = false)
-    runScenario(70, messageCount, warmup = false, batch = false)
-    runScenario(80, messageCount, warmup = false, batch = false)
-    runScenario(90, messageCount, warmup = false, batch = false)
-    runScenario(100, messageCount, warmup = false, batch = false)
-    runScenario(200, messageCount, warmup = false, batch = false)
+    runSequenceScenario(messageCount, oneAtTimeDispatcher, warmup = false, batch = false)
+    println("----------------")
+    println("Batch")
+    runSequenceScenario(messageCount, oneAtTimeDispatcher, warmup = false, batch = true)
+
+    println("================")
+    println("Throughput")
+    println("----------------")
+    println("Ping-pong")
+    runSequenceScenario(messageCount, throughputDispatcher, warmup = false, batch = false)
+    println("----------------")
+    println("Batch")
+    runSequenceScenario(messageCount, throughputDispatcher, warmup = false, batch = true)
 
     Await.ready(system.terminate(), Duration(1, TimeUnit.MINUTES))
+  }
+
+  def runSequenceScenario(messageCount: Long, dispatcher: String, warmup: Boolean, batch: Boolean): Unit = {
+    runScenario(1, messageCount, dispatcher, warmup, batch)
+    runScenario(2, messageCount, dispatcher, warmup, batch)
+    runScenario(3, messageCount, dispatcher, warmup, batch)
+    runScenario(4, messageCount, dispatcher, warmup, batch)
+    runScenario(5, messageCount, dispatcher, warmup, batch)
+    runScenario(6, messageCount, dispatcher, warmup, batch)
+    runScenario(7, messageCount, dispatcher, warmup, batch)
+    runScenario(8, messageCount, dispatcher, warmup, batch)
+    runScenario(9, messageCount, dispatcher, warmup, batch)
+    runScenario(10, messageCount, dispatcher, warmup, batch)
+    runScenario(12, messageCount, dispatcher, warmup, batch)
+    runScenario(14, messageCount, dispatcher, warmup, batch)
+    runScenario(16, messageCount, dispatcher, warmup, batch)
+    runScenario(18, messageCount, dispatcher, warmup, batch)
+    runScenario(20, messageCount, dispatcher, warmup, batch)
+    runScenario(30, messageCount, dispatcher, warmup, batch)
+    runScenario(40, messageCount, dispatcher, warmup, batch)
+    runScenario(50, messageCount, dispatcher, warmup, batch)
+    runScenario(60, messageCount, dispatcher, warmup, batch)
+    runScenario(70, messageCount, dispatcher, warmup, batch)
+    runScenario(80, messageCount, dispatcher, warmup, batch)
+    runScenario(90, messageCount, dispatcher, warmup, batch)
+    runScenario(100, messageCount, dispatcher, warmup, batch)
+    runScenario(150, messageCount, dispatcher, warmup, batch)
+    runScenario(200, messageCount, dispatcher, warmup, batch)
+    runScenario(250, messageCount, dispatcher, warmup, batch)
   }
 
   /**
@@ -87,14 +83,14 @@ object ThroughputBenchmark {
     * @param pairs - number of ping-pong pairs
     * @param messageCount - number of messages
     */
-  def runScenario(pairs: Int, messageCount: Long, warmup: Boolean, batch: Boolean): Unit = {
+  def runScenario(pairs: Int, messageCount: Long, dispatcher: String, warmup: Boolean, batch: Boolean): Unit = {
     val latch = new CountDownLatch(pairs)
     val messagesPerClient = messageCount / pairs
 
     val pongs = for (i <- 0 until pairs)
-      yield system.actorOf(Props[Pong].withDispatcher(throughputDispatcher))
+      yield system.actorOf(Props[Pong].withDispatcher(dispatcher))
     val pings = for (pong <- pongs)
-      yield system.actorOf(Props(new Ping(pong, latch, messagesPerClient)).withDispatcher(throughputDispatcher))
+      yield system.actorOf(Props(new Ping(pong, latch, messagesPerClient)).withDispatcher(dispatcher))
 
     val maxRunDuration = 1000000
     val start = System.nanoTime

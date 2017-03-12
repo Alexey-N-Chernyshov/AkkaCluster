@@ -22,7 +22,7 @@ object SingleNodeThroughputBenchmark {
   val system = ActorSystem("benchmark", config.getConfig("benchmark").withFallback(config))
 
   def main(args: Array[String]): Unit = {
-    val messageCount = 20000000L
+    val messageCount = 10000000L
     val oneAtTimeDispatcher = "one-at-time-dispatcher"
     val throughputDispatcher = "benchmark.throughput-dispatcher"
 

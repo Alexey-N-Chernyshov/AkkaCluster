@@ -26,10 +26,15 @@ object ThroughputBenchmark {
     val oneAtTimeDispatcher = "one-at-time-dispatcher"
     val throughputDispatcher = "benchmark.throughput-dispatcher"
 
-    runScenario(10, messageCount, throughputDispatcher, warmup = true, batch = true) // warm up
+    println("Warm up...")
+    runScenario(100, messageCount, throughputDispatcher, warmup = true, batch = true) // warm up
+    runScenario(100, messageCount, throughputDispatcher, warmup = true, batch = false) // warm up
+    runScenario(100, messageCount, oneAtTimeDispatcher, warmup = true, batch = true) // warm up
+    runScenario(100, messageCount, oneAtTimeDispatcher, warmup = true, batch = false) // warm up
+    println("Warm up ends")
 
     println("================")
-    println("Throughput")
+    println("oneAtTime")
     println("----------------")
     println("Ping-pong")
     runSequenceScenario(messageCount, oneAtTimeDispatcher, warmup = false, batch = false)
@@ -103,7 +108,8 @@ object ThroughputBenchmark {
     val durationS = time.toDouble / 1000000000.0
 
     if (!warmup) {
-      println("actors " + pairs + ", messages: " + messageCount + ", mes/s: " + (messageCount / durationS).toInt)
+      println("actors " + pairs + ", messages: " + messageCount + ", mes/s: " +
+        (messageCount / durationS).toInt + ", time: " + durationS)
     }
 
     pongs.foreach(system.stop(_))

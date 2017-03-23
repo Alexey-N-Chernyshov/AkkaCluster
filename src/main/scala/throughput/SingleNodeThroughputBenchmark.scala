@@ -6,7 +6,9 @@ package throughput
 
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{ActorSystem, Props}
+import benchmarking.messsage.{StartMessage, StartBatchMessage}
+import benchmarking.{PingActor, PongActor}
 import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.Await
@@ -22,92 +24,96 @@ object SingleNodeThroughputBenchmark {
   val system = ActorSystem("benchmark", config.getConfig("benchmark").withFallback(config))
 
   def main(args: Array[String]): Unit = {
-    val messageCount = 10000000L
+    val messageCount = 1000L//10000000L
     val oneAtTimeDispatcher = "one-at-time-dispatcher"
     val throughputDispatcher = "benchmark.throughput-dispatcher"
 
     println("Warm up...")
-    runScenario(100, messageCount, throughputDispatcher, warmup = true, batch = true) // warm up
-    runScenario(100, messageCount, throughputDispatcher, warmup = true, batch = false) // warm up
-    runScenario(100, messageCount, oneAtTimeDispatcher, warmup = true, batch = true) // warm up
-    runScenario(100, messageCount, oneAtTimeDispatcher, warmup = true, batch = false) // warm up
+    runScenario(100, messageCount, throughputDispatcher, batch = true) // warm up
+    runScenario(100, messageCount, throughputDispatcher, batch = false) // warm up
+    runScenario(100, messageCount, oneAtTimeDispatcher, batch = true) // warm up
+    runScenario(100, messageCount, oneAtTimeDispatcher, batch = false) // warm up
     println("Warm up ends")
 
     println("================")
     println("oneAtTime")
     println("----------------")
     println("Ping-pong")
-    for (i <- 0 until 5) {
-      println("---- " + i)
-      runSequenceScenario(messageCount, oneAtTimeDispatcher, warmup = false, batch = false)
-    }
+    runTest(messageCount, oneAtTimeDispatcher, batch = false)
+
     println("----------------")
     println("Batch")
-    for (i <- 0 until 5) {
-      println("---- " + i)
-      runSequenceScenario(messageCount, oneAtTimeDispatcher, warmup = false, batch = true)
-    }
+    runTest(messageCount, oneAtTimeDispatcher, batch = true)
 
     println("================")
     println("Throughput")
     println("----------------")
     println("Ping-pong")
-    for (i <- 0 until 5) {
-      println("---- " + i)
-      runSequenceScenario(messageCount, throughputDispatcher, warmup = false, batch = false)
-    }
+    runTest(messageCount, throughputDispatcher, batch = false)
     println("----------------")
     println("Batch")
-    for (i <- 0 until 5) {
-      println("---- " + i)
-      runSequenceScenario(messageCount, throughputDispatcher, warmup = false, batch = true)
-    }
+    runTest(messageCount, throughputDispatcher, batch = true)
 
+    Thread.sleep(1000)
     Await.ready(system.terminate(), Duration(1, TimeUnit.MINUTES))
   }
 
-  def runSequenceScenario(messageCount: Long, dispatcher: String, warmup: Boolean, batch: Boolean): Unit = {
-    runScenario(1, messageCount, dispatcher, warmup, batch)
-    runScenario(2, messageCount, dispatcher, warmup, batch)
-    runScenario(3, messageCount, dispatcher, warmup, batch)
-    runScenario(4, messageCount, dispatcher, warmup, batch)
-    runScenario(5, messageCount, dispatcher, warmup, batch)
-    runScenario(6, messageCount, dispatcher, warmup, batch)
-    runScenario(7, messageCount, dispatcher, warmup, batch)
-    runScenario(8, messageCount, dispatcher, warmup, batch)
-    runScenario(9, messageCount, dispatcher, warmup, batch)
-    runScenario(10, messageCount, dispatcher, warmup, batch)
-    runScenario(12, messageCount, dispatcher, warmup, batch)
-    runScenario(14, messageCount, dispatcher, warmup, batch)
-    runScenario(16, messageCount, dispatcher, warmup, batch)
-    runScenario(18, messageCount, dispatcher, warmup, batch)
-    runScenario(20, messageCount, dispatcher, warmup, batch)
-    runScenario(30, messageCount, dispatcher, warmup, batch)
-    runScenario(40, messageCount, dispatcher, warmup, batch)
-    runScenario(50, messageCount, dispatcher, warmup, batch)
-    runScenario(60, messageCount, dispatcher, warmup, batch)
-    runScenario(70, messageCount, dispatcher, warmup, batch)
-    runScenario(80, messageCount, dispatcher, warmup, batch)
-    runScenario(90, messageCount, dispatcher, warmup, batch)
-    runScenario(100, messageCount, dispatcher, warmup, batch)
-    runScenario(150, messageCount, dispatcher, warmup, batch)
-    runScenario(200, messageCount, dispatcher, warmup, batch)
-    runScenario(250, messageCount, dispatcher, warmup, batch)
+  /**
+    * Runs scenarios, get average and prints it.
+    * @param messageCount
+    * @param dispatcher
+    * @param batch
+    */
+  def runTest(messageCount: Long, dispatcher: String, batch: Boolean): Unit = {
+    getAverageScenario(1, messageCount, dispatcher, batch)
+    getAverageScenario(2, messageCount, dispatcher, batch)
+    getAverageScenario(3, messageCount, dispatcher, batch)
+    getAverageScenario(4, messageCount, dispatcher, batch)
+    getAverageScenario(5, messageCount, dispatcher, batch)
+    getAverageScenario(6, messageCount, dispatcher, batch)
+    getAverageScenario(7, messageCount, dispatcher, batch)
+    getAverageScenario(8, messageCount, dispatcher, batch)
+    getAverageScenario(9, messageCount, dispatcher, batch)
+    getAverageScenario(10, messageCount, dispatcher, batch)
+    getAverageScenario(12, messageCount, dispatcher, batch)
+    getAverageScenario(14, messageCount, dispatcher, batch)
+    getAverageScenario(16, messageCount, dispatcher, batch)
+    getAverageScenario(18, messageCount, dispatcher, batch)
+    getAverageScenario(20, messageCount, dispatcher, batch)
+    getAverageScenario(30, messageCount, dispatcher, batch)
+    getAverageScenario(40, messageCount, dispatcher, batch)
+    getAverageScenario(50, messageCount, dispatcher, batch)
+    getAverageScenario(60, messageCount, dispatcher, batch)
+    getAverageScenario(70, messageCount, dispatcher, batch)
+    getAverageScenario(80, messageCount, dispatcher, batch)
+    getAverageScenario(90, messageCount, dispatcher, batch)
+    getAverageScenario(100, messageCount, dispatcher, batch)
+    getAverageScenario(150, messageCount, dispatcher, batch)
+    getAverageScenario(200, messageCount, dispatcher, batch)
+    getAverageScenario(250, messageCount, dispatcher, batch)
+  }
+
+  def getAverageScenario(pairs: Int, messageCount: Long, dispatcher: String, batch: Boolean): Unit = {
+    def results = for (i <- 0 until 10)
+      yield runScenario(pairs, messageCount, dispatcher, batch)
+    println(results.sum / results.length)
   }
 
   /**
     * Runs scenario.
     * @param pairs - number of ping-pong pairs
     * @param messageCount - number of messages
+    * @param dispatcher - dispatcher (throughput)
+    * @param batch - is it batching job
     */
-  def runScenario(pairs: Int, messageCount: Long, dispatcher: String, warmup: Boolean, batch: Boolean): Unit = {
+  def runScenario(pairs: Int, messageCount: Long, dispatcher: String, batch: Boolean): Long = {
     val latch = new CountDownLatch(pairs)
     val messagesPerClient = messageCount / pairs
 
     val pongs = for (i <- 0 until pairs)
-      yield system.actorOf(Props[Pong].withDispatcher(dispatcher))
+      yield system.actorOf(Props[PongActor].withDispatcher(dispatcher))
     val pings = for (pong <- pongs)
-      yield system.actorOf(Props(new Ping(pong, latch, messagesPerClient)).withDispatcher(dispatcher))
+      yield system.actorOf(Props(new PingActor(pong, latch, messagesPerClient)).withDispatcher(dispatcher))
 
     val maxRunDuration = 1000000
     val start = System.nanoTime
@@ -119,76 +125,10 @@ object SingleNodeThroughputBenchmark {
     val time = System.nanoTime - start
     val durationS = time.toDouble / 1000000000.0
 
-    if (!warmup) {
-      //println("actors " + pairs + ", messages: " + messageCount + ", mes/s: " +
-      //  (messageCount / durationS).toInt + ", time: " + durationS)
-      println((messageCount / durationS).toInt)
-    }
-
     pongs.foreach(system.stop(_))
     pings.foreach(system.stop(_))
-  }
 
-  /**
-    * Message for benchmarking.
-    */
-  case object PingMessage
-
-  /**
-    * Start benchmarking.
-    */
-  case object StartMessage
-
-  /**
-    * Message for batch job.
-    */
-  case object StartBatchMessage
-
-  /**
-    * Replyes on the message, pong it back to the sender
-    */
-  class Pong extends Actor {
-
-    override def receive: Receive = {
-      case PingMessage =>
-        sender ! PingMessage
-    }
-
-  }
-
-  /**
-    * Sends messages and waits them back.
-    * @param pong - receiver
-    * @param messageCount - number of messages to be sent
-    */
-  class Ping(
-    pong: ActorRef,
-    latch: CountDownLatch,
-    messageCount: Long
-    ) extends Actor {
-
-    var sent = 0L
-    var received = 0L
-
-    override def receive: Receive = {
-      case PingMessage =>
-        received += 1
-        if (sent < messageCount) {
-          sent += 1
-          pong ! PingMessage
-        } else if (received >= messageCount) {
-          latch.countDown()
-        }
-      case StartMessage =>
-        sent += 1
-        pong ! PingMessage
-      case StartBatchMessage =>
-        for (i <- 0L until messageCount) {
-          sent += 1
-          pong ! PingMessage
-        }
-    }
-
+    return (messageCount / durationS).toLong
   }
 
 }
